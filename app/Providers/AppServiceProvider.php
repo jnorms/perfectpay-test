@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Http::macro('asaas', function () {
+            return Http::withHeaders([
+                 'User-Agent' => 'perfect-pay-app-test',
+                 'access_token' => config('services.asaas.token'),
+             ])
+                ->throw()
+                ->asJson()
+                ->baseUrl(config('services.asaas.uri'));
+        });
     }
 }
