@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Address;
+use App\Models\Client;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,5 +32,12 @@ class AppServiceProvider extends ServiceProvider
                 ->asJson()
                 ->baseUrl(config('services.asaas.uri'));
         });
+        
+        Relation::enforceMorphMap(
+            [
+                'address'  => Address::class,
+                'client'  => Client::class,
+            ]
+        );
     }
 }

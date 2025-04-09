@@ -8,4 +8,10 @@ use Illuminate\Foundation\Testing\WithFaker;
 abstract class TestCase extends BaseTestCase
 {
     use WithFaker;
+    
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \Artisan::call('migrate');
+    }
 }
