@@ -13,6 +13,7 @@ class Customer implements EntityInterface, AsaasEntityInterface, Arrayable
     protected string $document;
     protected string $email;
     protected string $mobilePhone;
+    protected string $asaasId;
     protected CustomerAddress $address;
     
     public function __construct() {}
@@ -99,6 +100,16 @@ class Customer implements EntityInterface, AsaasEntityInterface, Arrayable
     public function getAddress(): CustomerAddress
     {
         return $this->address;
+    }
+    
+    public function getAsaasId(): string
+    {
+        return $this->asaasId;
+    }
+    
+    public function setAsaasId(string $asaasId): void
+    {
+        $this->asaasId = $asaasId;
     }
     
     /**
