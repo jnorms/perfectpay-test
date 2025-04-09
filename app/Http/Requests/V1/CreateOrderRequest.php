@@ -35,13 +35,47 @@ class CreateOrderRequest extends FormRequest
             'client.address.complement'   => 'nullable|string',
             'client.address.neighborhood' => 'required|string',
             'client.address.postcode'     => 'required|string|size:8',
-            'products'                      => 'required|array',
-            'products.*.product_id'  => 'required|uuid|exists:products,uuid',
-            'products.*.amount'      => 'required|integer',
             'billing_type'           => [
                 'required',
                 Rule::enum(BillingTypeEnum::class)
-            ]
+            ],
+            'credit_card_infos'      => 'required_if:billing_type,credit_card|array',
+            'credit_card_infos.holder_name' => 'required_if:billing_type,credit_card|string',
+            'credit_card_infos.number' => 'required_if:billing_type,credit_card|string',
+            'credit_card_infos.expiry_month' => 'required_if:billing_type,credit_card|string|digits_between:1,12|after_or_equal:' . now(
+                )->format('m'),
+            'credit_card_infos.expiry_year' => 'required_if:billing_type,credit_card|string|size:4|after_or_equal:' . now(
+                )->year,
+            'credit_card_infos.ccv' => 'required_if:billing_type,credit_card|integer|digits_between:3,4',
         ];
     }
+    
+    
+    /**
+     * Get custom attributes for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'client.name'                   => 'nome',
+            'client.document'               => 'documento',
+            'client.email'                  => 'email',
+            'client.mobile_phone'           => 'celular',
+            'client.address.public_place' => 'logradouro',
+            'client.address.number'       => 'número',
+            'client.address.complement'   => 'complemento',
+            'client.address.neighborhood' => 'bairro',
+            'client.address.postcode'     => 'cep',
+            'billing_type'                    => 'forma de pagamento',
+            'credit_card_infos.holder_name'   => 'nome do titular',
+            'credit_card_infos.number'        => 'número do cartão',
+            'credit_card_infos.expiry_month'  => 'mês de expiração',
+            'credit_card_infos.expiry_year'   => 'ano de expiração',
+            'credit_card_infos.ccv'           => 'cvv',
+            'credit_card'           => 'cartão de crédito',
+        ];
+    }
+    
 }

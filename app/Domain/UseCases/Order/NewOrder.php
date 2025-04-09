@@ -3,23 +3,23 @@
 namespace App\Domain\UseCases\Order;
 
 use App\Domain\Entities\Asaas\Customer\Customer;
+use App\Domain\Entities\Asaas\Customer\CustomerAddress;
 use App\Domain\Enums\BillingTypeEnum;
 use App\Domain\Integrations\Asaas\Billing\CreateCreditCardBillingAsaasIntegration;
 use App\Domain\Integrations\Asaas\Billing\CreatePixBillingAsaasIntegration;
 use App\Domain\Integrations\Asaas\Billing\CreateTicketBillingAsaasIntegration;
 use App\Models\Client;
 use App\Models\Order;
-use App\Models\Product;
 
 class NewOrder
 {
-    protected array $products = [];
     protected Client $client;
     protected Order $order;
     
     public function __construct(
         protected int             $clientId,
         protected BillingTypeEnum $billingType,
+        protected array $additionalData = [],
     ) {}
     
     public function handle(): void
@@ -29,16 +29,18 @@ class NewOrder
             BillingTypeEnum::PIX => CreatePixBillingAsaasIntegration::class,
             BillingTypeEnum::CREDIT_CARD => CreateCreditCardBillingAsaasIntegration::class,
         };
-        
         $order = $this->createOrder();
-        
+        $integrationAttributes = [
+            'customer' => $this->makeCustomer(),
+            'orderId'  => $order->uuid,
+            'total'    => $order->total,
+        ];
+        if ($this->billingType === BillingTypeEnum::CREDIT_CARD) {
+            $integrationAttributes['additionalData'] = $this->additionalData;
+        }
         $integration = app(
             $integration,
-            [
-                'customer' => $this->makeCustomer(),
-                'orderId'  => $order->uuid,
-                'total'    => $order->total,
-            ]
+            $integrationAttributes
         );
         $integration->handle();
         $order->update(['asaas_id' => $integration->getResponseBody()['id']]);
@@ -46,8 +48,26 @@ class NewOrder
     
     protected function makeCustomer(): Customer
     {
+        $client = $this->findClient();
+        $clientAddress = $client->addresses()->latest()->first();
+        $customerAddress = new CustomerAddress();
+        $customerAddress->create(
+            address: $clientAddress->public_place,
+            number: $clientAddress->number,
+            complement: $clientAddress->complement,
+            neighborhood: $clientAddress->neighborhood,
+            postcode: $clientAddress->postcode,
+        );
+        
         $customer = new Customer();
-        $customer->setAsaasId($this->findClient()->asaas_id);
+        $customer->create(
+            name       : $client->name,
+            document   : $client->document,
+            email      : $client->email,
+            mobilePhone: $client->mobile_phone,
+            address    : $customerAddress
+        );
+        $customer->setAsaasId($client->asaas_id);
         return $customer;
     }
     
@@ -59,30 +79,16 @@ class NewOrder
         return $this->client;
     }
     
-    public function setProduct(string $product, int $amount): void
-    {
-        $this->products[$product] = $amount;
-    }
-    
     protected function createOrder(): Order
     {
-        $total = 0;
-        foreach ($this->products as $product => $amount) {
-            $total += $this->findProduct($product)->price * $amount;
-        }
         $this->order = $this->findClient()->orders()->create(
             [
-                'total' => $total,
+                'total' => 33500,
                 'billing_type' => $this->billingType,
             ]
         );
         
         return $this->order;
-    }
-    
-    protected function findProduct(string $product): Product
-    {
-        return Product::query()->whereUuid($product)->firstOrFail();
     }
     
     public function getOrder(): Order

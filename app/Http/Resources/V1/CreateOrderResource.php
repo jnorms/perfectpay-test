@@ -20,7 +20,7 @@ class CreateOrderResource extends JsonResource
             'total'      => $this->total / 100,
             'created_at' => $this->created_at->format('d/m/Y H:i'),
             'payment_infos' => [
-                'bar_code' => $this->when($this->billing_type === BillingTypeEnum::BOLETO, TicketPaymentInfoResource::make($this->resource)),
+                'boleto' => $this->when($this->billing_type === BillingTypeEnum::BOLETO, TicketPaymentInfoResource::make($this->resource)),
                 'pix' => $this->when($this->billing_type === BillingTypeEnum::PIX, PixPaymentInfoResource::make($this->resource)),
             ]
         ];

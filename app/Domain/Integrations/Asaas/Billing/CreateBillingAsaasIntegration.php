@@ -22,18 +22,19 @@ abstract class CreateBillingAsaasIntegration extends AsaasIntegrationsAbstract
      */
     public function handle(): void
     {
-        $this->response = $this->client->post(
-            'payments',
-            [
-                "customer"                                   => $this->customer->getAsaasId(),
-                "billingType"                                => $this->billingType()->name,
-                "value"                                      => $this->total / 100,
-                "dueDate"                                    => now()->addDay(),
-                "description"                                => "Pedido " . $this->orderId,
-                "daysAfterDueDateToRegistrationCancellation" => 1,
-                "externalReference"                          => $this->orderId,
-            ]
-        );
+        $this->response = $this->client->post('payments', $this->getAsaasData());
+    }
+    
+    protected function getAsaasData(): array {
+        return [
+            "customer"                                   => $this->customer->getAsaasId(),
+            "billingType"                                => $this->billingType()->name,
+            "value"                                      => $this->total / 100,
+            "dueDate"                                    => now()->addDay(),
+            "description"                                => "Pedido " . $this->orderId,
+            "daysAfterDueDateToRegistrationCancellation" => 1,
+            "externalReference"                          => $this->orderId,
+        ];
     }
     
     abstract protected function billingType(): BillingTypeEnum;
